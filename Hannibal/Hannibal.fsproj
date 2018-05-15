@@ -1,13 +1,20 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
-
+    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
+
   <ItemGroup>
-    <Compile Include="Tests.fs" />
+    <Compile Include="Hannibal.Http.fs" />
+    <Compile Include="Hannibal.Plan.fs" />
+    <Compile Include="Hannibal.Reports.fs" />
+    <Compile Include="HttpTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
