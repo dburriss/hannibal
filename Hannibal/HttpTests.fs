@@ -32,4 +32,4 @@ let ``Calling google twice gets 2 responses`` () =
 let ``Calling google for 1 second calls more than once`` () =
     let g = get_from "https://google.com/"
     let responses = execute_request_with_tactic g (for_duration_of 1 second)
-    Assert.True(responses.Length = 2)
+    Assert.True(responses.Length > 1)

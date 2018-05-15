@@ -86,7 +86,11 @@ module Http =
     let once = Once
     let for_duration_of (duration:int) (durationUnit:DurationUnit) = Duration (duration, durationUnit)
     let to_count_of count = CountOf count
-
+    let to_timespan (time:int) (du:DurationUnit) =
+        match du with
+        | Seconds -> TimeSpan.FromSeconds (time |> float)
+        | Minutes -> TimeSpan.FromMinutes (time |> float)
+        | Hours -> TimeSpan.FromHours (time |> float)
     
     let private make_resource resource : Request =
         {
@@ -128,12 +132,28 @@ module Http =
         match request.Resource with
         | Get url -> getRequest url request.Headers
         | _ -> failwithf "Resource %A not supported" request.Resource
+ 
+    let execute_for_duration request time units =
+        let clock = (fun () -> DateTimeOffset.UtcNow) 
+        let ts = to_timespan time units
+        let now = clock()
+        let until = now + ts
+        //TODO: time each
+        //TODO: run multiple in parallel
+        let rSeq = Seq.initInfinite (fun i -> execute_request request)
+        let responses = new ResizeArray<Response>()
+        let mutable i = 0
+        while(clock() < until) do
+            let response = rSeq |> Seq.item i
+            responses.Add(response)
+            i <- i + 1
+        responses |> Seq.toList
 
     let execute_request_with_tactic request tactic = 
         match tactic with
         | Once -> [execute_request request]
         | CountOf n -> [1..n]|> List.toArray |> Array.Parallel.map (fun i -> execute_request request) |> Array.toList
         | Duration (0,u) -> failwithf "Tactic %A not supported" tactic
-        | Duration (v,u) -> raise (NotImplementedException "Duration not supported yet.")
+        | Duration (v,u) -> execute_for_duration request v u
 
     
