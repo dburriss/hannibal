@@ -1,6 +1,5 @@
-module Tests
+module HttpTests
 
-open System
 open Xunit
 open Hannibal.Http
 
@@ -33,3 +32,23 @@ let ``Calling google for 1 second calls more than once`` () =
     let g = get_from "https://google.com/"
     let responses = execute_request_with_tactic g (for_duration_of 1 second)
     Assert.True(responses.Length > 1)
+
+[<Fact>]
+let ``post`` () =
+    Assert.True(false)
+
+[<Fact>]
+let ``put`` () =
+    Assert.True(false)
+
+[<Fact>]
+let ``head`` () =
+    Assert.True(false)
+
+[<Fact>]
+let ``delete`` () =
+    Assert.True(false)
+
+[<Fact>]
+let ``content type`` () =
+    Assert.True(false)
