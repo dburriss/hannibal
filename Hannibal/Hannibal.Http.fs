@@ -68,6 +68,7 @@ module Http =
     type Call = Request * Tactic
 
     type Response = {
+        RequestDescription: string
         StatusCode: int
         Content: string option
         Headers: (string * string) list
@@ -113,27 +114,30 @@ module Http =
     
     let call request tactic : Call  = (request, tactic)
 
-    let toResponse (msg:HttpResponseMessage) : Response =
+    let toResponse (request:Request) (msg:HttpResponseMessage) : Response =
         {
+            RequestDescription = sprintf "%A" request.Resource
             StatusCode = msg.StatusCode |> int
             Content = if (msg.Content = null) then None else Some(msg.Content.ReadAsStringAsync().Result)
             Headers = msg.Headers |> Seq.collect (fun h -> (h.Value |> Seq.map (fun v -> (h.Key, v)))) |> Seq.toList
             Raw = msg
         }
 
-    let private getRequest url headers = 
+    let private getRequest (request:Request) = 
+        let (Get url) = request.Resource
+        let headers = request.Headers
         use client = new HttpClient ()
         composeMessage Net.Http.HttpMethod.Get (Uri url) headers None
         |> client.SendAsync
         |> result
-        |> toResponse
+        |> toResponse request
 
     let execute_request request =
         match request.Resource with
-        | Get url -> getRequest url request.Headers
+        | Get _ -> getRequest request
         | _ -> failwithf "Resource %A not supported" request.Resource
  
-    let execute_for_duration request time units =
+    let execute_request_for_duration request time units =
         let clock = (fun () -> DateTimeOffset.UtcNow) 
         let ts = to_timespan time units
         let now = clock()
@@ -154,6 +158,6 @@ module Http =
         | Once -> [execute_request request]
         | CountOf n -> [1..n]|> List.toArray |> Array.Parallel.map (fun i -> execute_request request) |> Array.toList
         | Duration (0,u) -> failwithf "Tactic %A not supported" tactic
-        | Duration (v,u) -> execute_for_duration request v u
+        | Duration (v,u) -> execute_request_for_duration request v u
 
     
