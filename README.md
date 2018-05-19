@@ -1,4 +1,7 @@
 # Hannibal
+
+> Work in progress
+
 I am a HTTP DSL
 
 ## Example usage
@@ -33,4 +36,18 @@ let debriefing =
 
 //save assertion results to csv
 format_debriefing debriefing as_text write_to_console
+```
+
+### Output
+
+```console
+========================================================================================
+CONTACT FORM SUBMIT
+========================================================================================
+Check health      | Success | Calls Get "http://locahost/health/instance" Once
+========================================================================================
+Spam contact form | Success | Calls Post "http://localhost/contact" Duration (2,Seconds)
+========================================================================================
+I love it when a plan comes together.
+========================================================================================
 ```

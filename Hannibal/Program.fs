@@ -9,7 +9,7 @@ open System
 //form data
 type ContactForm = { name:string; email:string }
 let healthUrl = "http://google.com/"
-let hformUrl = "http://google.com/"
+let formUrl = "http://google.com/"
 let [<EntryPoint>] main _ = 
 
     //health request
@@ -17,7 +17,7 @@ let [<EntryPoint>] main _ =
 
     //contact form request
     let contact_post_request =
-        post_to healthUrl
+        post_to formUrl
         //|> with_body (randomize<ContactForm> |> to_form)
         |> with_header "key" "let me in" 
         |> with_header "correlationid" "abc"
