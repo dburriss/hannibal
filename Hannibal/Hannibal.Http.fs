@@ -40,6 +40,9 @@ module Http =
         | Post of string
         | Put of string
         | Delete of string
+        | Head of string
+        | Options of string
+        | Trace of string
 
     type Request = {
         Resource: Resource
@@ -103,9 +106,12 @@ module Http =
 
     //verb actions
     let get_from url : Request = make_resource (Get url)
-    let post_to url : Request = make_resource (Get url)
+    let post_to url : Request = make_resource (Post url)
     let put_to url : Request = make_resource (Put url)
     let delete_from url : Request = make_resource (Delete url)
+    let head_of url : Request = make_resource (Head url)
+    let options_of url : Request = make_resource (Options url)
+    let trace_of url : Request = make_resource (Trace url)
 
     // request modifiers
     let with_body body (request:Request) = { request with Body = Some(body) }
@@ -132,9 +138,69 @@ module Http =
         |> result
         |> toResponse request
 
+    let private postRequest (request:Request) = 
+        let (Post url) = request.Resource
+        let headers = request.Headers
+        use client = new HttpClient ()
+        composeMessage Net.Http.HttpMethod.Post (Uri url) headers None
+        |> client.SendAsync
+        |> result
+        |> toResponse request
+
+    let private putRequest (request:Request) = 
+        let (Put url) = request.Resource
+        let headers = request.Headers
+        use client = new HttpClient ()
+        composeMessage Net.Http.HttpMethod.Put (Uri url) headers None
+        |> client.SendAsync
+        |> result
+        |> toResponse request
+
+    let private deleteRequest (request:Request) = 
+        let (Delete url) = request.Resource
+        let headers = request.Headers
+        use client = new HttpClient ()
+        composeMessage Net.Http.HttpMethod.Delete (Uri url) headers None
+        |> client.SendAsync
+        |> result
+        |> toResponse request
+
+    let private headRequest (request:Request) = 
+        let (Head url) = request.Resource
+        let headers = request.Headers
+        use client = new HttpClient ()
+        composeMessage Net.Http.HttpMethod.Head (Uri url) headers None
+        |> client.SendAsync
+        |> result
+        |> toResponse request
+
+    let private optionsRequest (request:Request) = 
+        let (Options url) = request.Resource
+        let headers = request.Headers
+        use client = new HttpClient ()
+        composeMessage Net.Http.HttpMethod.Options (Uri url) headers None
+        |> client.SendAsync
+        |> result
+        |> toResponse request
+
+    let private traceRequest (request:Request) = 
+        let (Trace url) = request.Resource
+        let headers = request.Headers
+        use client = new HttpClient ()
+        composeMessage Net.Http.HttpMethod.Trace (Uri url) headers None
+        |> client.SendAsync
+        |> result
+        |> toResponse request
+
     let execute_request request =
         match request.Resource with
         | Get _ -> getRequest request
+        | Post _ -> postRequest request
+        | Put _ -> putRequest request
+        | Delete _ -> deleteRequest request
+        | Head _ -> headRequest request
+        | Options _ -> optionsRequest request
+        | Trace _ -> traceRequest request
         | _ -> failwithf "Resource %A not supported" request.Resource
  
     let execute_request_for_duration request time units =

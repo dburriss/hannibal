@@ -38,24 +38,38 @@ let ``Calling google for 1 second calls more than once`` () =
 [<Fact>]
 let ``post`` () =
     let p = post_to url
-    let responses = execute_request_with_tactic p (for_duration_of 1 second)
-    Assert.True(responses.Length > 1)
+    let responses = execute_request_with_tactic p once
+    Assert.True(responses.Length = 1)
 
 [<Fact>]
 let ``put`` () =
     let p = put_to url
-    let responses = execute_request_with_tactic p (for_duration_of 1 second)
-    Assert.True(responses.Length > 1)
+    let responses = execute_request_with_tactic p once
+    Assert.True(responses.Length = 1)
 
 [<Fact>]
 let ``delete`` () =
     let d = delete_from url
-    let responses = execute_request_with_tactic d (for_duration_of 1 second)
-    Assert.True(responses.Length > 1)
+    let responses = execute_request_with_tactic d once
+    Assert.True(responses.Length = 1)
 
 [<Fact>]
 let ``head`` () =
-    Assert.True(false)
+    let h = head_of url
+    let responses = execute_request_with_tactic h once
+    Assert.True(responses.Length = 1)
+
+[<Fact>]
+let ``options`` () =
+    let o = options_of url
+    let responses = execute_request_with_tactic o once
+    Assert.True(responses.Length = 1)
+
+[<Fact>]
+let ``trace`` () =
+    let t = options_of url
+    let responses = execute_request_with_tactic t once
+    Assert.True(responses.Length = 1)
 
 [<Fact>]
 let ``content type`` () =
