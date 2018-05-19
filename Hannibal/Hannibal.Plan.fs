@@ -12,13 +12,15 @@ module Plan =
     let private isError r = not (isOk r)
 
     //plan types
-    type StepExecutionResult = (Step * Response list) 
-    type PlanExecutionResult = StepExecutionResult list
-
+    
     type Plan = {
         Name: string
         Steps: Step list
     }
+
+    type StepExecutionResult = (Step * Response list) 
+    type PlanExecutionResult = (Plan * StepExecutionResult list)
+
 
     // plan functions
     let plan name =
@@ -38,7 +40,7 @@ module Plan =
     let execute (plan:Plan) : PlanExecutionResult = 
         let executeStep step = (step, (execute_request_with_tactic step.Request step.Tactic))
         let stepResults = plan.Steps |> List.map (fun s -> executeStep s)
-        stepResults    
+        (plan, stepResults)
 
 
     // debrief types
@@ -77,7 +79,8 @@ module Plan =
         }
         
     let step_result stepName (assertion:AssertionTarget<StepExecutionResult>) (debriefing:Debriefing) : Debriefing = 
-        let stepXResult = debriefing.PlanExecutionResult |> List.find (fun (s,rs) -> s.Name = stepName)
+        let plan, sres = debriefing.PlanExecutionResult
+        let stepXResult = sres |> List.find (fun (s,rs) -> s.Name = stepName)
         let assertions = assertion.Assert stepXResult
         let split (err, ok) result =
             match result with
@@ -89,7 +92,8 @@ module Plan =
         { debriefing with Successes = List.append debriefing.Successes successes ; Failures = List.append debriefing.Failures failures }
     
     let plan_result (assertion:AssertionTarget<StepExecutionResult>) (debriefing:Debriefing) : Debriefing = 
-        debriefing.PlanExecutionResult 
+        let plan, sres = debriefing.PlanExecutionResult
+        sres 
         |> List.fold (fun state (step, _) -> step_result step.Name assertion state) debriefing
         
     let should_be ((desc, check, expected):Check<'a>) : AssertionTarget<StepExecutionResult> = 

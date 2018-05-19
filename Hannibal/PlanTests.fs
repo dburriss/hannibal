@@ -33,8 +33,9 @@ let ``execute has responses for every step`` () =
         |> step "get google again" (call get_google (to_count_of 2))
 
     let results = execute google_plan
-    let responses = results |> List.collect (fun (_, rs) -> rs)
-    Assert.Equal(2, results.Length)
+    let plan, sres = results
+    let responses = sres |> List.collect (fun (_, rs) -> rs)
+    Assert.Equal(2, sres.Length)
     Assert.Equal(3, responses.Length)
 
 [<Fact>]

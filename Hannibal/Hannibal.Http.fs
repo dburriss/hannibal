@@ -103,7 +103,7 @@ module Http =
 
     //verb actions
     let get_from url : Request = make_resource (Get url)
-    let post_to url : Request = make_resource (Post url)
+    let post_to url : Request = make_resource (Get url)
     let put_to url : Request = make_resource (Put url)
     let delete_from url : Request = make_resource (Delete url)
 
