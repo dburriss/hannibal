@@ -32,8 +32,8 @@ let [<EntryPoint>] main _ =
     //assert against test plan execution results
     let debriefing = 
         debrief r
-        |> plan_result (should_all_be (status_code 200))
-        //|> step_result "check health" (should_be (status_code 200))
+        |> plan_result (should_be (status_code 200))
+        |> step_result "check health" (should_be (status_code 200))
 
 
     //save assertion results to csv

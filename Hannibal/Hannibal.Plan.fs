@@ -5,11 +5,11 @@ module Plan =
     open Http
 
     //helper
-    let isOk = function
+    let private isOk = function
     | Ok _ -> true
     | Error _ -> false
 
-    let isError r = not (isOk r)
+    let private isError r = not (isOk r)
 
     //plan types
     type StepExecutionResult = (Step * Response list) 
@@ -56,9 +56,7 @@ module Plan =
 
     //need to build up assert that have a function for assertion over specific range of types
 
-    type AssertAgainst =
-        | StepAssertion of AssertionTarget<StepExecutionResult>
-        | PlanAssertion of AssertionTarget<PlanExecutionResult>
+    type AssertAgainst = AssertionTarget<StepExecutionResult list>
 
 
     type Debriefing = {
@@ -67,7 +65,8 @@ module Plan =
         Failures: AssertionResult list
     }  
     
-    type Check<'a> = (string * ('a -> PlanExecutionResult -> Result<AssertionResult,AssertionResult> list) * 'a)
+    type Check<'a> = (string * ('a -> StepExecutionResult -> Result<AssertionResult,AssertionResult> list) * 'a)
+    type CheckAll<'a> = (string * ('a -> PlanExecutionResult -> Result<AssertionResult,AssertionResult> list) * 'a)
 
     //debrief
     let debrief (result:PlanExecutionResult) : Debriefing = 
@@ -76,9 +75,10 @@ module Plan =
             Successes = List<AssertionResult>.Empty
             Failures = List<AssertionResult>.Empty
         }
-
-    let plan_result (assertion:AssertionTarget<PlanExecutionResult>) (debriefing:Debriefing) : Debriefing = 
-        let assertions = assertion.Assert debriefing.PlanExecutionResult
+        
+    let step_result stepName (assertion:AssertionTarget<StepExecutionResult>) (debriefing:Debriefing) : Debriefing = 
+        let stepXResult = debriefing.PlanExecutionResult |> List.find (fun (s,rs) -> s.Name = stepName)
+        let assertions = assertion.Assert stepXResult
         let split (err, ok) result =
             match result with
             | Ok x -> (err, ok |> List.append [x])
@@ -87,36 +87,34 @@ module Plan =
         let (failures,successes) = assertions |> List.fold (fun s r -> split s r) ([],[])
         
         { debriefing with Successes = List.append debriefing.Successes successes ; Failures = List.append debriefing.Failures failures }
-
-    let should_all_be<'a> ((desc, check, expected):Check<'a>): AssertionTarget<PlanExecutionResult> = 
+    
+    let plan_result (assertion:AssertionTarget<StepExecutionResult>) (debriefing:Debriefing) : Debriefing = 
+        debriefing.PlanExecutionResult 
+        |> List.fold (fun state (step, _) -> step_result step.Name assertion state) debriefing
+        
+    let should_be ((desc, check, expected):Check<'a>) : AssertionTarget<StepExecutionResult> = 
         {
             Description = desc
             Assert = check expected
         }
-
-    let step_result stepName assertion (debriefing:Debriefing) : Debriefing = 
-        let stepXResult = debriefing.PlanExecutionResult |> List.find (fun (s,rs) -> s.Name = stepName)
-        debriefing
     
-    let should_be = ()
-
-    
-
     let status_code (expected:int) : Check<int> = 
         let desc:string = sprintf "Status Code %i" expected
-        let f (x:int) (result:PlanExecutionResult): Result<AssertionResult,AssertionResult> list =
-            result |> List.collect (fun (s, rs) -> rs |> List.map (fun resp -> 
-                                                    if(resp.StatusCode = x) then 
-                                                        Ok { 
-                                                                Step = s; 
-                                                                Description = sprintf "Success: Status Code matches: %i" expected; 
-                                                                Response = resp }
-                                                    else Error { 
-                                                                    Step = s; 
-                                                                    Description = sprintf "Failure: Status Code mismatch. Expected %i but found %i" expected x; 
-                                                                    Response = resp }
-                                                )
-                                )
+        let f (x:int) (result:StepExecutionResult): Result<AssertionResult,AssertionResult> list =
+            let (s, rs) = result
+            rs 
+            |> List.map (fun resp -> 
+                            if(resp.StatusCode = x) then 
+                                Ok { 
+                                        Step = s; 
+                                        Description = sprintf "Success: Status Code matches: %i" expected; 
+                                        Response = resp }
+                            else 
+                                Error { 
+                                        Step = s; 
+                                        Description = sprintf "Failure: Status Code mismatch. Expected %i but found %i" expected x; 
+                                        Response = resp }
+                        )
 
         (desc, f, expected)
  

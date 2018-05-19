@@ -4,9 +4,11 @@ open Xunit
 open Hannibal.Http
 open Hannibal.Plan
 
+let url = "https://google.com/"
+
 [<Fact>]
 let ``plan name is set`` () =
-    let get_google = get_from "https://google.com"
+    let get_google = get_from url
     let google_plan =
         plan "contact form submit"
         |> step "get google" (call get_google once)
@@ -14,7 +16,7 @@ let ``plan name is set`` () =
 
 [<Fact>]
 let ``plan has results for every step`` () =
-    let get_google = get_from "https://google.com"
+    let get_google = get_from url
     let google_plan =
         plan "contact form submit"
         |> step "get google" (call get_google once)
@@ -24,7 +26,7 @@ let ``plan has results for every step`` () =
 
 [<Fact>]
 let ``execute has responses for every step`` () =
-    let get_google = get_from "https://google.com"
+    let get_google = get_from url
     let google_plan =
         plan "contact form submit"
         |> step "get google" (call get_google once)
@@ -37,7 +39,7 @@ let ``execute has responses for every step`` () =
 
 [<Fact>]
 let ``assert all steps are 200`` () =
-    let get_google = get_from "https://google.com"
+    let get_google = get_from url
     let google_plan =
         plan "contact form submit"
         |> step "get google" (call get_google once)
@@ -46,15 +48,15 @@ let ``assert all steps are 200`` () =
     let results = execute google_plan
     let debriefing = 
         debrief results
-        |> plan_result (should_all_be (status_code 200))
+        |> plan_result (should_be (status_code 200))
 
     Assert.Equal(3,debriefing.Successes.Length)
     Assert.Equal(0,debriefing.Failures.Length)
 
 [<Fact>]
 let ``has failure if 404`` () =
-    let get_google = get_from "https://google.com"
-    let i_dont_exist = get_from "https://google.com/idontexist"
+    let get_google = get_from url
+    let i_dont_exist = get_from (sprintf "%sidontexist" url)
     let google_plan =
         plan "contact form submit"
         |> step "get google" (call i_dont_exist once)
@@ -63,14 +65,14 @@ let ``has failure if 404`` () =
     let results = execute google_plan
     let debriefing = 
         debrief results
-        |> plan_result (should_all_be (status_code 200))
+        |> plan_result (should_be (status_code 200))
 
     Assert.Equal(2,debriefing.Successes.Length)
     Assert.Equal(1,debriefing.Failures.Length)
 
 [<Fact>]
 let ``assert success with success`` () =
-    let get_google = get_from "https://google.com"
+    let get_google = get_from url
     let google_plan =
         plan "contact form submit"
         |> step "get google twice" (call get_google (to_count_of 2))
@@ -78,15 +80,15 @@ let ``assert success with success`` () =
     let results = execute google_plan
     let debriefing = 
         debrief results
-        |> plan_result (should_all_be (status_code 200))
+        |> plan_result (should_be (status_code 200))
 
     Assert.True(is_success debriefing)
 
     
 [<Fact>]
 let ``assert success with failure`` () =
-    let get_google = get_from "https://google.com"
-    let i_dont_exist = get_from "https://google.com/idontexist"
+    let get_google = get_from url
+    let i_dont_exist = get_from (sprintf "%sidontexist" url)
     let google_plan =
         plan "contact form submit"
         |> step "get google" (call i_dont_exist once)
@@ -95,7 +97,7 @@ let ``assert success with failure`` () =
     let results = execute google_plan
     let debriefing = 
         debrief results
-        |> plan_result (should_all_be (status_code 200))
+        |> plan_result (should_be (status_code 200))
 
     Assert.False(is_success debriefing)
     

@@ -105,7 +105,7 @@ module Http =
     let get_from url : Request = make_resource (Get url)
     let post_to url : Request = make_resource (Post url)
     let put_to url : Request = make_resource (Put url)
-    let delete url : Request = make_resource (Delete url)
+    let delete_from url : Request = make_resource (Delete url)
 
     // request modifiers
     let with_body body (request:Request) = { request with Body = Some(body) }
