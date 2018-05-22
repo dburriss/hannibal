@@ -35,7 +35,7 @@ let [<EntryPoint>] main _ =
     let debriefing = 
         debrief r
         |> plan_result (should_be (status_code 200))
-        |> step_result "Check health" (should_be (status_code 200))
+        |> step_result "Check health" (should_be (content_contains "google"))
 
     //save assertion results to csv
     format_debriefing debriefing as_text write_to_console

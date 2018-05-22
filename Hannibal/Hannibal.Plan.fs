@@ -121,6 +121,32 @@ module Plan =
                         )
 
         (desc, f, expected)
+
+    let private stringContains (str:string) (substring:string) = if(str = null) then false else str.Contains(substring)
+
+    let content_contains (expected:string) : Check<string> = 
+        let desc:string = sprintf "Body content contains %s" expected
+        let f (x:string) (result:StepExecutionResult): Result<AssertionResult,AssertionResult> list =
+            let (s, rs) = result
+            rs 
+            |> List.map (fun resp -> 
+                            let err = Error { 
+                                        Step = s; 
+                                        Description = sprintf "Failure: Content does not contain value. Expected %s IN %s" expected x; 
+                                        Response = resp }
+                            match resp.Content with
+                            | None -> err
+                            | Some c ->
+                                if(stringContains c x) then 
+                                    Ok { 
+                                            Step = s; 
+                                            Description = sprintf "Success: Content contains: %s" expected; 
+                                            Response = resp }
+                                else err
+                                
+                        )
+
+        (desc, f, expected)
  
     let is_success (debriefing:Debriefing) =
         let failureCount = debriefing.Failures |> List.length
