@@ -1,0 +1,4 @@
+﻿namespace Hannibal
+
+module Mountebank =
+    ()

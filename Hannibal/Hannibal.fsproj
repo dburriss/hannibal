@@ -9,6 +9,7 @@
     <Compile Include="Hannibal.Http.fs" />
     <Compile Include="Hannibal.Plan.fs" />
     <Compile Include="Hannibal.Reports.fs" />
+    <Compile Include="Hannibal.Mountebank.fs" />
     <Compile Include="HttpTests.fs" />
     <Compile Include="PlanTests.fs" />
     <Compile Include="Program.fs" />
