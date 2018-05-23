@@ -13,6 +13,12 @@ module Plan =
 
     //plan types
     
+    type Step = {
+        Name: string
+        Tactic: Tactic
+        Request: Request
+    }
+    
     type Plan = {
         Name: string
         Steps: Step list

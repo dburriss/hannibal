@@ -62,14 +62,6 @@ module Http =
         | CountOf of int
 
 
-    type Step = {
-        Name: string
-        Tactic: Tactic
-        Request: Request
-    }
-
-    type Call = Request * Tactic
-
     type Response = {
         RequestDescription: string
         StatusCode: int
@@ -77,6 +69,8 @@ module Http =
         Headers: (string * string) list
         Raw: HttpResponseMessage
     }
+    
+    type Call = Request * Tactic
 
     // helpers
     let second = Seconds
