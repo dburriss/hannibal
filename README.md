@@ -2,6 +2,14 @@
 
 > Work in progress
 
+- [x] Basic flow from request to console report
+- [ ] Mountebank helpers for testing
+- [ ] Spawned request workers for parallel calls (add workers to tactic)
+- [ ] Timed<> Response
+- [ ] More assertions on response and timing
+- [ ] Markdown report and save
+- [ ] Expand Tactics with ramp-up until response time increase
+
 I am a HTTP DSL. Hannibal has 3 modules for different *Http* request/response, setup and execute a test *Plan*, and finally a module for executing *Reports* of the plan execution.
 
 ## Simple example with test plan and report
@@ -76,9 +84,18 @@ let request = post_to formUrl
 let response = execute_request request
 ```
 
-### Important types and functions
+### Tactics
+
+Tactics come in many forms. The simplest is `Once`. This executes a request a single time. 
+
+Then you have the `CountOf` tactic which allows you to specify a number in of times to call a `Request`.
+
+Next you have the `Duration` tactic which allows you to specify a number in `Seconds`, `Minutes`, or `Hours`.
+
+### Http: Important types and functions
 
 ```fsharp
+//HTTP
 type Request = {
     Resource: Resource
     Body: string option
@@ -105,4 +122,79 @@ trace_of
 
 //takes a Request, executes it, and returns the Response
 execute_request
+
+//TACTICS
+type DurationUnit =
+        | Seconds
+        | Minutes
+        | Hours
+
+type Tactic =
+    | Once
+    | Duration of int * DurationUnit
+    | CountOf of int
+
+//takes Request and Tactic
+execute_request_with_tactic
+```
+
+## Plan
+
+Probably the most important part of Hannibal is his `Plan`. A plan allows you to compose `Step`s. A `Step` is a `Request` with an associated `Tactic`.
+
+### Example: Test critical e-commerce features
+
+```fsharp
+let critical_site_features_plan = 
+    plan "Critical Features"
+    |> step "Health check" (call health_test_request once)
+    |> step "Home page" (call home_request (for_duration_of 2 seconds))
+    |> step "Checkout" (call cart_request (for_duration_of 2 seconds))
+
+let result = execute critical_site_features_plan
+```
+
+### Debrief on Plan results
+
+A `Debriefing` allows you to setup a series of assertions against the `Plan`, or specific Steps in the Plan.
+
+For example we can assert that the health test should be *200 OK*.
+
+```fsharp
+let debriefing =
+        debrief critical_site_features_plan
+        |> step_result "Check health is OK" (should_be (status_code 200))
+```
+
+### Plan: Important types and functions
+
+```fsharp
+//PLAN
+type Step = {
+    Name: string
+    Tactic: Tactic
+    Request: Request
+}
+
+type Plan = {
+    Name: string
+    Steps: Step list
+}
+
+type StepExecutionResult = (Step * Response list) 
+type PlanExecutionResult = (Plan * StepExecutionResult list)
+
+//takes a name for the plan and returns a Plan
+plan
+
+//takes a string for the name of the step and a Request with a Tactic and the Plan to add the step to
+step
+```
+
+## Report
+
+> Currently the only report format is `as_text` with the output target being `write_to_console`.
+
+```fsharp
+format_debriefing debriefing as_text write_to_console
 ```
