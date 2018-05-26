@@ -2,9 +2,9 @@ namespace Hannibal
 
 module Reports = 
 
-    open Hannibal.Http
     open Hannibal.Plan
     open System.Text
+    open System
 
     //reporting
     let format_debriefing debriefing format report = 
@@ -12,6 +12,10 @@ module Reports =
         r |> report |> ignore
 
     // format
+    let trunc l (s:string) = 
+        let x = min l s.Length
+        s.Substring(0, x).PadRight(l)
+
     let private planName (per:PlanExecutionResult) =
         let plan, _ = per
         plan.Name
@@ -28,44 +32,50 @@ module Reports =
         let step, rs  = ser
         let isSuc = if(stepSucceeded step.Name d) then "Success" else "Fail"
         let res = step.Request.Resource
-        sprintf "%s | %s | Calls %A %A" step.Name isSuc res step.Tactic
+        let avg = rs    |> List.map (fun r -> r.ResponseTime) |> Statistics.calculateAverage
+                        |> Option.defaultValue TimeSpan.Zero
+        sprintf "|%-20s | %5s | %10s | Calls %s|" 
+                (trunc 20 step.Name) 
+                (trunc 7 isSuc) 
+                (trunc 10 (sprintf "%f s" avg.TotalSeconds))
+                (trunc 64 (sprintf "%A %A" res step.Tactic))
 
-    let private line = "====================================================================================="
+    let private line = new System.String('-', 118)
     let as_csv = ()
     let as_text (debriefing:Debriefing) = 
-
+        
         let append (sb:StringBuilder) (s:string) = sb.Append(s) |> ignore
-        let s = StringBuilder()
-        let p str = append s str
+        let sb = StringBuilder()
+        let print str = append sb str
 
-        let n = System.Environment.NewLine
-        let pln() = 
-            append s line
-            append s n
+        let nl = System.Environment.NewLine
+        let printline() = 
+            append sb line
+            append sb nl
         
         let head (s:string) = 
-            pln()
-            p (s.ToUpper())
-            p n
-            pln()
+            printline()
+            print (trunc 100 (s.ToUpper()))
+            print nl
+            printline()
 
         let row (s:string) = 
-            p s
-            p n
-            pln()
+            print s
+            print nl
+            printline()
 
         let body (d:Debriefing) = (snd d.PlanExecutionResult) |> List.iter (fun sre -> row(sreS d sre))
 
         let footer (d:Debriefing) = 
             let fs = if(d.Failures.Length = 0) then "I love it when a plan comes together." else "Back to the drawing board..."
-            p fs
-            p n
-            pln()
+            print fs
+            print nl
+            printline()
 
         head (planName debriefing.PlanExecutionResult)
         body debriefing
         footer debriefing
-        s.ToString()
+        sb.ToString()
             
 
         

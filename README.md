@@ -3,11 +3,13 @@
 > Work in progress
 
 - [x] Basic flow from request to console report
+- [x] Timed<> Response
+- [ ] More assertions on response and timing
 - [ ] Mountebank helpers for testing
 - [ ] Spawned request workers for parallel calls (add workers to tactic)
-- [ ] Timed<> Response
-- [ ] More assertions on response and timing
-- [ ] Markdown report and save
+- [ ] Randomize
+- [ ] form and url binding
+- [ ] Markdown & CSV report and save
 - [ ] Expand Tactics with ramp-up until response time increase
 
 I am a HTTP DSL. Hannibal has 3 modules for different *Http* request/response, setup and execute a test *Plan*, and finally a module for executing *Reports* of the plan execution.

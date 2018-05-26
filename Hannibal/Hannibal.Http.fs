@@ -4,6 +4,7 @@ module Http =
 
     open System
     open System.Net.Http
+    open Timing
 
     // furl
     let private addHeader (headers : Headers.HttpHeaders) (name, value : string) =
@@ -39,6 +40,7 @@ module Http =
         | Get of string
         | Post of string
         | Put of string
+        | Patch of string
         | Delete of string
         | Head of string
         | Options of string
@@ -68,6 +70,7 @@ module Http =
         Content: string option
         Headers: (string * string) list
         Raw: HttpResponseMessage
+        ResponseTime: TimeSpan
     }
     
     type Call = Request * Tactic
@@ -114,83 +117,62 @@ module Http =
     
     let call request tactic : Call  = (request, tactic)
 
-    let toResponse (request:Request) (msg:HttpResponseMessage) : Response =
+    let toResponse (request:Request) (msg:Timed<HttpResponseMessage>) : Response =
         {
             RequestDescription = sprintf "%A" request.Resource
-            StatusCode = msg.StatusCode |> int
-            Content = if (msg.Content = null) then None else Some(msg.Content.ReadAsStringAsync().Result)
-            Headers = msg.Headers |> Seq.collect (fun h -> (h.Value |> Seq.map (fun v -> (h.Key, v)))) |> Seq.toList
-            Raw = msg
+            StatusCode = msg.Result.StatusCode |> int
+            Content = if (msg.Result.Content = null) then None else Some(msg.Result.Content.ReadAsStringAsync().Result)
+            Headers = msg.Result.Headers |> Seq.collect (fun h -> (h.Value |> Seq.map (fun v -> (h.Key, v)))) |> Seq.toList
+            Raw = msg.Result
+            ResponseTime = msg.Duration
         }
+
+    let makeRequest method url (request:Request) =
+        use client = new HttpClient ()
+        let httpCall () = composeMessage method (Uri url) request.Headers request.Body
+                            |> client.SendAsync
+                            |> result
+        let msg = Timed.timeOn Clocks.machineClock httpCall ()
+        toResponse request msg
 
     let private getRequest (request:Request) = 
         let (Get url) = request.Resource
-        let headers = request.Headers
-        use client = new HttpClient ()
-        composeMessage Net.Http.HttpMethod.Get (Uri url) headers None
-        |> client.SendAsync
-        |> result
-        |> toResponse request
+        makeRequest Net.Http.HttpMethod.Get url request
 
     let private postRequest (request:Request) = 
         let (Post url) = request.Resource
-        let headers = request.Headers
-        use client = new HttpClient ()
-        composeMessage Net.Http.HttpMethod.Post (Uri url) headers None
-        |> client.SendAsync
-        |> result
-        |> toResponse request
+        makeRequest Net.Http.HttpMethod.Post url request
 
     let private putRequest (request:Request) = 
         let (Put url) = request.Resource
-        let headers = request.Headers
-        use client = new HttpClient ()
-        composeMessage Net.Http.HttpMethod.Put (Uri url) headers None
-        |> client.SendAsync
-        |> result
-        |> toResponse request
+        makeRequest Net.Http.HttpMethod.Put url request
+
+    let private patchRequest (request:Request) = 
+        let (Patch url) = request.Resource
+        makeRequest (new HttpMethod("PATCH")) url request
 
     let private deleteRequest (request:Request) = 
         let (Delete url) = request.Resource
-        let headers = request.Headers
-        use client = new HttpClient ()
-        composeMessage Net.Http.HttpMethod.Delete (Uri url) headers None
-        |> client.SendAsync
-        |> result
-        |> toResponse request
+        makeRequest Net.Http.HttpMethod.Delete url request
 
     let private headRequest (request:Request) = 
         let (Head url) = request.Resource
-        let headers = request.Headers
-        use client = new HttpClient ()
-        composeMessage Net.Http.HttpMethod.Head (Uri url) headers None
-        |> client.SendAsync
-        |> result
-        |> toResponse request
+        makeRequest Net.Http.HttpMethod.Head url request
 
     let private optionsRequest (request:Request) = 
         let (Options url) = request.Resource
-        let headers = request.Headers
-        use client = new HttpClient ()
-        composeMessage Net.Http.HttpMethod.Options (Uri url) headers None
-        |> client.SendAsync
-        |> result
-        |> toResponse request
+        makeRequest Net.Http.HttpMethod.Options url request
 
     let private traceRequest (request:Request) = 
         let (Trace url) = request.Resource
-        let headers = request.Headers
-        use client = new HttpClient ()
-        composeMessage Net.Http.HttpMethod.Trace (Uri url) headers None
-        |> client.SendAsync
-        |> result
-        |> toResponse request
+        makeRequest Net.Http.HttpMethod.Trace url request
 
     let execute_request request =
         match request.Resource with
         | Get _ -> getRequest request
         | Post _ -> postRequest request
         | Put _ -> putRequest request
+        | Patch _ -> patchRequest request
         | Delete _ -> deleteRequest request
         | Head _ -> headRequest request
         | Options _ -> optionsRequest request

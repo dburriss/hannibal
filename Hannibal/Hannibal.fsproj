@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Timing.fs" />
+    <Compile Include="Statistics.fs" />
     <Compile Include="Hannibal.Http.fs" />
     <Compile Include="Hannibal.Plan.fs" />
     <Compile Include="Hannibal.Reports.fs" />
