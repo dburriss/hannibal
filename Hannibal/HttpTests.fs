@@ -3,10 +3,10 @@ module HttpTests
 open Xunit
 open Hannibal.Http
 
-let url = "https://google.com/"
+let url = "http://127.0.0.1:4545/"
 
 [<Fact>]
-let ``Calling google gets a response`` () =
+let ``Calling server gets a response`` () =
     let g = get_from url
     let responses = execute_request_with_tactic g Once
     Assert.True(responses.Length = 1)

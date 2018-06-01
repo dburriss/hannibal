@@ -93,7 +93,7 @@ module Http =
         | Minutes -> TimeSpan.FromMinutes (time |> float)
         | Hours -> TimeSpan.FromHours (time |> float)
     
-    let private make_resource resource : Request =
+    let internal make_request resource : Request =
         {
             Resource = resource
             Body = None
@@ -102,13 +102,13 @@ module Http =
         }
 
     //verb actions
-    let get_from url : Request = make_resource (Get url)
-    let post_to url : Request = make_resource (Post url)
-    let put_to url : Request = make_resource (Put url)
-    let delete_from url : Request = make_resource (Delete url)
-    let head_of url : Request = make_resource (Head url)
-    let options_of url : Request = make_resource (Options url)
-    let trace_of url : Request = make_resource (Trace url)
+    let get_from url : Request = make_request (Get url)
+    let post_to url : Request = make_request (Post url)
+    let put_to url : Request = make_request (Put url)
+    let delete_from url : Request = make_request (Delete url)
+    let head_of url : Request = make_request (Head url)
+    let options_of url : Request = make_request (Options url)
+    let trace_of url : Request = make_request (Trace url)
 
     // request modifiers
     let with_body body (request:Request) = { request with Body = Some(body) }
@@ -127,7 +127,7 @@ module Http =
             ResponseTime = msg.Duration
         }
 
-    let makeRequest method url (request:Request) =
+    let doRequest method url (request:Request) =
         use client = new HttpClient ()
         let httpCall () = composeMessage method (Uri url) request.Headers request.Body
                             |> client.SendAsync
@@ -137,35 +137,35 @@ module Http =
 
     let private getRequest (request:Request) = 
         let (Get url) = request.Resource
-        makeRequest Net.Http.HttpMethod.Get url request
+        doRequest Net.Http.HttpMethod.Get url request
 
     let private postRequest (request:Request) = 
         let (Post url) = request.Resource
-        makeRequest Net.Http.HttpMethod.Post url request
+        doRequest Net.Http.HttpMethod.Post url request
 
     let private putRequest (request:Request) = 
         let (Put url) = request.Resource
-        makeRequest Net.Http.HttpMethod.Put url request
+        doRequest Net.Http.HttpMethod.Put url request
 
     let private patchRequest (request:Request) = 
         let (Patch url) = request.Resource
-        makeRequest (new HttpMethod("PATCH")) url request
+        doRequest (new HttpMethod("PATCH")) url request
 
     let private deleteRequest (request:Request) = 
         let (Delete url) = request.Resource
-        makeRequest Net.Http.HttpMethod.Delete url request
+        doRequest Net.Http.HttpMethod.Delete url request
 
     let private headRequest (request:Request) = 
         let (Head url) = request.Resource
-        makeRequest Net.Http.HttpMethod.Head url request
+        doRequest Net.Http.HttpMethod.Head url request
 
     let private optionsRequest (request:Request) = 
         let (Options url) = request.Resource
-        makeRequest Net.Http.HttpMethod.Options url request
+        doRequest Net.Http.HttpMethod.Options url request
 
     let private traceRequest (request:Request) = 
         let (Trace url) = request.Resource
-        makeRequest Net.Http.HttpMethod.Trace url request
+        doRequest Net.Http.HttpMethod.Trace url request
 
     let execute_request request =
         match request.Resource with

@@ -3,8 +3,9 @@
 open Xunit
 open Hannibal.Http
 open Hannibal.Plan
+open Hannibal.Mountebank
 
-let url = "https://google.com/"
+let url = "http://localhost:4545/"
 
 [<Fact>]
 let ``plan name is set`` () =
@@ -88,12 +89,18 @@ let ``assert success with success`` () =
     
 [<Fact>]
 let ``assert success with failure`` () =
-    let get_google = get_from url
-    let i_dont_exist = get_from (sprintf "%sidontexist" url)
+    let get_url = get_from url
+    
+    let i_dont_exist_url = sprintf "%sidontexist" url
+    let i_dont_exist = get_from i_dont_exist_url
+    for_call (Get i_dont_exist_url)
+    |> send_status_code 404
+    |> fake_it
+
     let google_plan =
         plan "contact form submit"
         |> step "get google" (call i_dont_exist once)
-        |> step "get google twice" (call get_google (to_count_of 2))
+        //|> step "get google twice" (call get_url (to_count_of 2))
 
     let results = execute google_plan
     let debriefing = 

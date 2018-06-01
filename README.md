@@ -4,15 +4,20 @@
 
 - [x] Basic flow from request to console report
 - [x] Timed<> Response
-- [ ] More assertions on response and timing
+- [ ] Mountebank docker
+- [ ] FAKE tasks
 - [ ] Mountebank helpers for testing
+- [ ] More assertions on response and timing
 - [ ] Spawned request workers for parallel calls (add workers to tactic)
 - [ ] Randomize
 - [ ] form and url binding
 - [ ] Markdown & CSV report and save
 - [ ] Expand Tactics with ramp-up until response time increase
+- [ ] Parser for custom DSL
 
-I am a HTTP DSL. Hannibal has 3 modules for different *Http* request/response, setup and execute a test *Plan*, and finally a module for executing *Reports* of the plan execution.
+> Hannibal is a HTTP DSL focusing on defining HTTP testing in as natural a language as possible. Also it allows me to play in F# :)
+
+It has 3 modules for different *Http* request/response, setup and execute a test *Plan*, and finally a module for executing *Reports* of the plan execution.
 
 ## Simple example with test plan and report
 
@@ -199,4 +204,14 @@ step
 
 ```fsharp
 format_debriefing debriefing as_text write_to_console
+```
+
+## Mountebank
+
+Mountebank is a service virtualization tool. Check it out at [the website](http://www.mbtest.org). Hannibal integration with Mountebank allows you to easily setup responses for any dependent HTTP calls that your services may depend on.
+
+```fsharp
+for_call (Get "http:acme.com/i-dont-exist/")
+    |> send_status_code 404
+    |> fake_it
 ```

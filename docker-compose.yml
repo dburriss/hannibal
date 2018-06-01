@@ -1,0 +1,6 @@
+server:
+  image: andyrbell/mountebank
+  ports: 
+    - 2525:2525
+    - 4545:4545
+  restart: always
